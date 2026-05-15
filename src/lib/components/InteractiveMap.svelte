@@ -30,4 +30,6 @@
     });
     onDestroy(() => { if (map) map.remove(); });
 </script>
+
+
 <div bind:this={mapElement} class="w-full h-80 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-blue-900/10 border-4 border-white z-0"></div>

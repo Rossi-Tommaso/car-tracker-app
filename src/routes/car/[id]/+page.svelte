@@ -39,7 +39,11 @@
     }
 
     async function handleParkHere() {
-        if (!carId || !navigator.geolocation || !userState.user) return;
+        if (!carId || !navigator.geolocation || !userState.user) {
+            alert("Geolocalizzazione non supportata dal tuo dispositivo.");
+            return;
+        }
+        
         savingLocation = true;
 
         const successCallback = async (pos: GeolocationPosition) => {
@@ -53,14 +57,30 @@
                 await updateDoc(carRef, { lastParked });
                 if (car) car.lastParked = lastParked;
             } catch (err) {
-                console.error(err);
+                console.error("Errore DB:", err);
+                alert("Posizione trovata, ma errore nel salvataggio su Firebase.");
             } finally {
                 savingLocation = false;
             }
         };
 
-        const errorCallback = () => { savingLocation = false; alert("Errore GPS"); };
-        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, { enableHighAccuracy: true });
+        const errorCallback = (error: GeolocationPositionError) => {
+            savingLocation = false;
+            // Intercettiamo il VERO motivo per cui fallisce
+            let msg = "Errore sconosciuto";
+            if (error.code === 1) msg = "PERMESSO NEGATO: Devi autorizzare il GPS nelle impostazioni del browser/lucchetto.";
+            if (error.code === 2) msg = "POSIZIONE NON DISPONIBILE: Controlla che il GPS del telefono sia acceso.";
+            if (error.code === 3) msg = "TIMEOUT: Segnale troppo debole. Esci all'aperto o riprova.";
+            
+            alert("⚠️ " + msg);
+        };
+
+        // OPZIONI MODIFICATE: Fallback più permissivo
+        navigator.geolocation.getCurrentPosition(successCallback, errorCallback, { 
+            enableHighAccuracy: false, // <-- Mettiamo false per usare anche celle/Wi-Fi se il GPS puro fallisce
+            timeout: 15000,            // <-- Diamo 15 secondi di tempo al telefono per capire dove si trova
+            maximumAge: 0
+        });
     }
 
     async function confirmDelete() {
