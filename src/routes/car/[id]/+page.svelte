@@ -55,7 +55,7 @@
             try {
                 const carRef = doc(db, 'cars', carId as string);
                 await updateDoc(carRef, { lastParked });
-                if (car) car.lastParked = lastParked;
+                if (car) car = { ...car, lastParked: lastParked };
             } catch (err) {
                 console.error("Errore DB:", err);
                 alert("Posizione trovata, ma errore nel salvataggio su Firebase.");
